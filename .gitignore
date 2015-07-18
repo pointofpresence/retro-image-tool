@@ -27,3 +27,5 @@ build/Release
 node_modules
 
 webfontkit-20150718-080419.zip
+
+.idea
