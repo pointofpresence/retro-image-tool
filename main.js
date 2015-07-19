@@ -1,8 +1,8 @@
+"use strict";
+
 const LINE_WIDTH = 16;
 const LINE_HEIGHT = 20;
 const WINDOW_COLOR = "#555";
-const WINDOW_HIGHLIGHT_COLOR = "#888";
-const WINDOW_BORDER_COLOR = "#888";
 
 var GlobalWindowIdCounter = 0;
 var GlobalWindowZIndexCounter = 0;
@@ -19,10 +19,11 @@ UploadInput.onchange = function (e) {
 
         imageFileReader.onload = (function (File) {
             return (function (FileReaderEvent) {
-                if (File.type.indexOf("image/") == 0 && File.type.indexOf("x-ilbm") == -1)
-                    LoadStandardImage(FileReaderEvent.target.result, File.name);
-                else
-                    LoadOtherImage(FileReaderEvent.target.result, File.name);
+                if (File.type.indexOf("image/") == 0 && File.type.indexOf("x-ilbm") == -1) {
+                    loadStandardImage(FileReaderEvent.target.result, File.name);
+                } else {
+                    loadOtherImage(FileReaderEvent.target.result, File.name);
+                }
             });
         })(e.target.files[i]);
 
@@ -46,71 +47,88 @@ Dropzone.ondragleave = function (e) {
 Dropzone.ondrop = function (e) {
     e.preventDefault();
 
+    //noinspection JSUnresolvedVariable
     if (e.dataTransfer.types[0] == "Text" || e.dataTransfer.types[0] == "text/plain" || e.dataTransfer.types[0] == "public.utf8-plain-text") {
         var data;
 
-        if (e.dataTransfer.types[0] == "Text")
+        //noinspection JSUnresolvedVariable
+        if (e.dataTransfer.types[0] == "Text") {
+            //noinspection JSUnresolvedVariable
             data = e.dataTransfer.getData("Text").split(',');
-        else
+        } else {
+            //noinspection JSUnresolvedVariable
             data = e.dataTransfer.getData("text/plain").split(',');
+        }
 
         document.getElementById(data[2]).style.left = (document.getElementById(data[2]).offsetLeft + e.screenX - parseInt(data[0], 10));
         document.getElementById(data[2]).style.top = (document.getElementById(data[2]).offsetTop + e.screenY - parseInt(data[1], 10));
     }
 
+    //noinspection JSUnresolvedVariable
     for (var i = 0; i < e.dataTransfer.files.length; i++) {
         var imageFileReader = new FileReader();
 
+        //noinspection JSUnresolvedVariable
         imageFileReader.onload = (function (File) {
             return (function (FileReaderEvent) {
-                if (File.type.indexOf("image/") == 0 && File.type.indexOf("x-ilbm") == -1)
-                    LoadStandardImage(FileReaderEvent.target.result, File.name);
-                else
-                    LoadOtherImage(FileReaderEvent.target.result, File.name);
+                if (File.type.indexOf("image/") == 0 && File.type.indexOf("x-ilbm") == -1) {
+                    loadStandardImage(FileReaderEvent.target.result, File.name);
+                } else {
+                    loadOtherImage(FileReaderEvent.target.result, File.name);
+                }
             });
         })(e.dataTransfer.files[i]);
 
+        //noinspection JSUnresolvedVariable
         imageFileReader.readAsDataURL(e.dataTransfer.files[i]);
     }
 };
 
-LoadStandardImage("sw.png", "sw.png");
+loadStandardImage("sw.png", "sw.png");
 
 // -----------------------------------------------------------------------------
 
-function LoadStandardImage(imageSource, fileName) {
+function loadStandardImage(imageSource, fileName) {
     var imageInfos = [];
 
     imageInfos.Image = document.createElement("img");
     imageInfos.FileName = fileName;
 
     imageInfos.Image.onload = function () {
-        DisplayImageWindow(imageInfos);
+        displayImageWindow(imageInfos);
     };
 
     imageInfos.Image.src = imageSource;
 }
 
-function LoadOtherImage(imageSource, fileName) {
+function loadOtherImage(imageSource, fileName) {
     var imageInfos = [];
 
     imageInfos.Image = document.createElement("img");
     imageInfos.FileName = fileName;
 
     imageInfos.Image.onload = function () {
-        DisplayImageWindow(imageInfos);
+        displayImageWindow(imageInfos);
     };
 
-    imageInfos.Data = new Uint8Array(Base64ToArray(imageSource));
+    imageInfos.Data = new Uint8Array(base64ToArray(imageSource));
 
-    DecodeIff(imageInfos);
+    decodeIff(imageInfos);
 
-    if (imageInfos.Canvas)
+    if (imageInfos.Canvas) {
         imageInfos.Image.src = imageInfos.Canvas.toDataURL();
+    }
 }
 
-function Base64ToArray(base64Data) {
-    var base64TranslationTable = [62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 0, 0, 0, 0, 0, 0, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51];
+function base64ToArray(base64Data) {
+    var base64TranslationTable = [
+        62, 0, 0, 0, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
+        0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+        11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+        25, 0, 0, 0, 0, 0, 0, 26, 27, 28, 29, 30, 31, 32, 33,
+        34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+        48, 49, 50, 51
+    ];
 
     var decodedData = [];
 
@@ -124,8 +142,7 @@ function Base64ToArray(base64Data) {
         for (var tripletIndex = 0; tripletIndex < 3; tripletIndex++) {
             if (base64Data[i + tripletIndex] != "=") {
                 decodedData.push((decodedTriplet >> (16 - tripletIndex * 8)) & 0xff);
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -134,10 +151,15 @@ function Base64ToArray(base64Data) {
     return decodedData;
 }
 
-function DecodeIff(imageInfos) {
-    var iffInfos = {Data: imageInfos.Data, DataIndex: 0, Colors: null, Canvas: null};
+function decodeIff(imageInfos) {
+    var iffInfos = {
+        Data:      imageInfos.Data,
+        DataIndex: 0,
+        Colors:    null,
+        Canvas:    null
+    };
 
-    ParseIff(iffInfos);
+    parseIff(iffInfos);
 
     imageInfos.Canvas = iffInfos.Canvas;
     imageInfos.Colors = iffInfos.Colors;
@@ -145,7 +167,7 @@ function DecodeIff(imageInfos) {
     imageInfos.AspectY = iffInfos.AspectY;
 }
 
-function ParseIff(iffInfos) {
+function parseIff(iffInfos) {
     var id = String.fromCharCode(iffInfos.Data[iffInfos.DataIndex++]);
     id += String.fromCharCode(iffInfos.Data[iffInfos.DataIndex++]);
     id += String.fromCharCode(iffInfos.Data[iffInfos.DataIndex++]);
@@ -157,12 +179,12 @@ function ParseIff(iffInfos) {
     size += iffInfos.Data[iffInfos.DataIndex++];
 
     if (iffInfos.DataIndex == 8 && id != "FORM") {
-        console.log("Image is not an ILBM file!");
-
+        console.error("Image is not an ILBM file!");
         return;
     }
 
-    var endIndex = iffInfos.DataIndex + size;
+    var endIndex = iffInfos.DataIndex + size,
+        red, green, blue, colorIndex, i, bitPlaneIndex, lineByteIndex;
 
     while (iffInfos.DataIndex < endIndex) {
         switch (id) {
@@ -174,12 +196,12 @@ function ParseIff(iffInfos) {
 
                 if (type != "ILBM") {
                     iffInfos.DataIndex += size;
-
                     return;
                 }
 
-                while (iffInfos.DataIndex < endIndex)
-                    ParseIff(iffInfos);
+                while (iffInfos.DataIndex < endIndex) {
+                    parseIff(iffInfos);
+                }
 
                 break;
 
@@ -222,9 +244,8 @@ function ParseIff(iffInfos) {
                     iffInfos.ViewportMode += iffInfos.Data[iffInfos.DataIndex++] << 16;
                     iffInfos.ViewportMode += iffInfos.Data[iffInfos.DataIndex++] << 8;
                     iffInfos.ViewportMode += iffInfos.Data[iffInfos.DataIndex++];
-                }
-                else {
-                    console.log("Unknown CAMG chunk size detected!");
+                } else {
+                    console.warn("Unknown CAMG chunk size detected!");
 
                     iffInfos.DataIndex += size;
                 }
@@ -232,14 +253,15 @@ function ParseIff(iffInfos) {
                 break;
 
             case "CMAP":
+                //noinspection JSValidateTypes
                 iffInfos.Colors = [];
 
                 var lowerColorBits = 0;
 
                 while (iffInfos.DataIndex < endIndex) {
-                    var red = iffInfos.Data[iffInfos.DataIndex++];
-                    var green = iffInfos.Data[iffInfos.DataIndex++];
-                    var blue = iffInfos.Data[iffInfos.DataIndex++];
+                    red = iffInfos.Data[iffInfos.DataIndex++];
+                    green = iffInfos.Data[iffInfos.DataIndex++];
+                    blue = iffInfos.Data[iffInfos.DataIndex++];
 
                     iffInfos.Colors.push({Red: red, Green: green, Blue: blue});
 
@@ -248,36 +270,37 @@ function ParseIff(iffInfos) {
 
                 if (lowerColorBits == 0) // Check for a 4096 colors palette.
                 {
-                    for (var colorIndex = 0; colorIndex < iffInfos.Colors.length; colorIndex++) {
+                    for (colorIndex = 0; colorIndex < iffInfos.Colors.length; colorIndex++) {
                         iffInfos.Colors[colorIndex].Red = Math.floor(iffInfos.Colors[colorIndex].Red * 255.0 / 240.0);
                         iffInfos.Colors[colorIndex].Green = Math.floor(iffInfos.Colors[colorIndex].Green * 255.0 / 240.0);
                         iffInfos.Colors[colorIndex].Blue = Math.floor(iffInfos.Colors[colorIndex].Blue * 255.0 / 240.0);
                     }
                 }
 
-                if (iffInfos.DataIndex & 1) // Avoid odd data index.
+                //noinspection JSBitwiseOperatorUsage
+                if (iffInfos.DataIndex & 1) { // Avoid odd data index.
                     iffInfos.DataIndex++;
+                }
 
                 break;
 
             case "BODY":
                 if (iffInfos.Canvas) {
-                    console.log("Found another BODY - skipping...");
-
+                    console.info("Found another BODY - skipping...");
                     iffInfos.DataIndex += size;
-
                     break;
                 }
 
-                if (iffInfos.ViewportMode & 0x80) // EHB image.
-                {
-                    while (iffInfos.Colors.length < 64)
+                //noinspection JSBitwiseOperatorUsage
+                if (iffInfos.ViewportMode & 0x80) {// EHB image.
+                    while (iffInfos.Colors.length < 64) {
                         iffInfos.Colors.push({Red: 0, Green: 0, Blue: 0});
+                    }
 
-                    for (var i = 0; i < 32; i++) {
-                        var red = Math.floor(iffInfos.Colors[i].Red / 2.0);
-                        var green = Math.floor(iffInfos.Colors[i].Green / 2.0);
-                        var blue = Math.floor(iffInfos.Colors[i].Blue / 2.0);
+                    for (i = 0; i < 32; i++) {
+                        red = Math.floor(iffInfos.Colors[i].Red / 2.0);
+                        green = Math.floor(iffInfos.Colors[i].Green / 2.0);
+                        blue = Math.floor(iffInfos.Colors[i].Blue / 2.0);
 
                         iffInfos.Colors[i + 32].Red = red;
                         iffInfos.Colors[i + 32].Green = green;
@@ -285,6 +308,7 @@ function ParseIff(iffInfos) {
                     }
                 }
 
+                //noinspection JSValidateTypes
                 iffInfos.Canvas = document.createElement("canvas");
 
                 iffInfos.Canvas.width = iffInfos.Width;
@@ -297,13 +321,13 @@ function ParseIff(iffInfos) {
 
                 var bitPlanes = new Array(iffInfos.Bitplanes);
 
-                for (var i = 0; i < iffInfos.Bitplanes; i++)
+                for (i = 0; i < iffInfos.Bitplanes; i++)
                     bitPlanes[i] = new Array(lineByteCount);
 
                 for (var y = 0; y < iffInfos.Height; y++) {
-                    for (var bitPlaneIndex = 0; bitPlaneIndex < iffInfos.Bitplanes; bitPlaneIndex++) {
+                    for (bitPlaneIndex = 0; bitPlaneIndex < iffInfos.Bitplanes; bitPlaneIndex++) {
                         if (iffInfos.Compression == 1) {
-                            var lineByteIndex = 0;
+                            lineByteIndex = 0;
 
                             while (lineByteIndex < lineByteCount) {
                                 var count = iffInfos.Data[iffInfos.DataIndex++];
@@ -311,38 +335,42 @@ function ParseIff(iffInfos) {
                                 if (count < 128) {
                                     count++;
 
-                                    while (count--)
+                                    while (count--) {
                                         bitPlanes[bitPlaneIndex][lineByteIndex++] = iffInfos.Data[iffInfos.DataIndex++];
-                                }
-                                else {
+                                    }
+                                } else {
                                     count = 256 - count + 1;
                                     var byte = iffInfos.Data[iffInfos.DataIndex++];
 
-                                    while (count--)
+                                    while (count--) {
                                         bitPlanes[bitPlaneIndex][lineByteIndex++] = byte;
+                                    }
                                 }
                             }
                         }
                         else {
-                            for (var lineByteIndex = 0; lineByteIndex < lineByteCount; lineByteIndex++) {
+                            for (lineByteIndex = 0; lineByteIndex < lineByteCount; lineByteIndex++) {
                                 bitPlanes[bitPlaneIndex][lineByteIndex] = iffInfos.Data[iffInfos.DataIndex++];
                             }
                         }
                     }
 
                     for (var x = 0; x < iffInfos.Width; x++) {
-                        var lineByteIndex = Math.floor(x / 8.0);
+                        lineByteIndex = Math.floor(x / 8.0);
                         var byteMask = 0x80 >> (x & 0x7);
-                        var colorIndex = 0;
+                        colorIndex = 0;
 
-                        for (var bitPlaneIndex = 0; bitPlaneIndex < iffInfos.Bitplanes; bitPlaneIndex++)
-                            if ((bitPlanes[bitPlaneIndex][lineByteIndex] & byteMask) != 0)
+                        for (bitPlaneIndex = 0; bitPlaneIndex < iffInfos.Bitplanes; bitPlaneIndex++) {
+                            if ((bitPlanes[bitPlaneIndex][lineByteIndex] & byteMask) != 0) {
                                 colorIndex += 1 << bitPlaneIndex;
+                            }
+                        }
 
                         var pixelIndex = (x + y * iffInfos.Width) * 4;
 
-                        if (colorIndex >= iffInfos.Colors.length)
+                        if (colorIndex >= iffInfos.Colors.length) {
                             colorIndex = 0;
+                        }
 
                         data.data[pixelIndex] = iffInfos.Colors[colorIndex].Red;
                         data.data[pixelIndex + 1] = iffInfos.Colors[colorIndex].Green;
@@ -358,42 +386,44 @@ function ParseIff(iffInfos) {
             default:
                 iffInfos.DataIndex += size;
 
-                if (iffInfos.DataIndex & 1) // Avoid odd data index.
+                //noinspection JSBitwiseOperatorUsage
+                if (iffInfos.DataIndex & 1) { // Avoid odd data index.
                     iffInfos.DataIndex++;
+                }
 
                 break;
         }
     }
 }
 
-function DisplayImageWindow(imageInfos) {
+function displayImageWindow(imageInfos) {
     imageInfos.Id = GlobalWindowIdCounter++;
 
-    var windowDiv = CreateImageWindow(imageInfos);
+    var windowDiv = createImageWindow(imageInfos);
 
     Dropzone.appendChild(windowDiv);
-
-    ProcessMenuAction(windowDiv.id.substring(windowDiv.id.lastIndexOf("_") + 1));
+    processMenuAction(windowDiv.id.substring(windowDiv.id.lastIndexOf("_") + 1));
 }
 
-function GetColors(canvas) {
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
-    var colorCube = new Uint32Array(256 * 256 * 256);
-    var colors = [];
+function getColors(canvas) {
+    var context = canvas.getContext("2d"),
+        data = context.getImageData(0, 0, canvas.width, canvas.height),
+        colorCube = new Uint32Array(256 * 256 * 256),
+        colors = [];
 
     for (var y = 0; y < canvas.height; y++) {
         for (var x = 0; x < canvas.width; x++) {
             var pixelIndex = (x + y * canvas.width) * 4;
 
-            var red = data.data[pixelIndex];
-            var green = data.data[pixelIndex + 1];
-            var blue = data.data[pixelIndex + 2];
-            var alpha = data.data[pixelIndex + 3];
+            var red = data.data[pixelIndex],
+                green = data.data[pixelIndex + 1],
+                blue = data.data[pixelIndex + 2],
+                alpha = data.data[pixelIndex + 3];
 
             if (alpha == 255) {
-                if (colorCube[red * 256 * 256 + green * 256 + blue] == 0)
+                if (colorCube[red * 256 * 256 + green * 256 + blue] == 0) {
                     colors.push({Red: red, Green: green, Blue: blue});
+                }
 
                 colorCube[red * 256 * 256 + green * 256 + blue]++;
             }
@@ -407,20 +437,20 @@ function GetColors(canvas) {
     return colors;
 }
 
-function CreateColorCube(canvas) {
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
-    var totalColorCount = 0;
-    var colorCube = new Uint32Array(256 * 256 * 256);
+function createColorCube(canvas) {
+    var context = canvas.getContext("2d"),
+        data = context.getImageData(0, 0, canvas.width, canvas.height),
+        totalColorCount = 0,
+        colorCube = new Uint32Array(256 * 256 * 256);
 
     for (var y = 0; y < canvas.height; y++) {
         for (var x = 0; x < canvas.width; x++) {
             var pixelIndex = (x + y * canvas.width) * 4;
 
-            var red = data.data[pixelIndex];
-            var green = data.data[pixelIndex + 1];
-            var blue = data.data[pixelIndex + 2];
-            var alpha = data.data[pixelIndex + 3];
+            var red = data.data[pixelIndex],
+                green = data.data[pixelIndex + 1],
+                blue = data.data[pixelIndex + 2],
+                alpha = data.data[pixelIndex + 3];
 
             if (alpha == 255) {
                 if (colorCube[red * 256 * 256 + green * 256 + blue] == 0)
@@ -434,25 +464,25 @@ function CreateColorCube(canvas) {
     return colorCube;
 }
 
-function TrimColorCube(colorCube, colorCubeInfo) {
-    var redMin = 255;
-    var redMax = 0;
+function trimColorCube(colorCube, colorCubeInfo) {
+    var redMin = 255,
+        redMax = 0;
 
-    var greenMin = 255;
-    var greenMax = 0;
+    var greenMin = 255,
+        greenMax = 0;
 
-    var blueMin = 255;
-    var blueMax = 0;
+    var blueMin = 255,
+        blueMax = 0;
 
-    var redCounts = new Uint32Array(256);
-    var greenCounts = new Uint32Array(256);
-    var blueCounts = new Uint32Array(256);
+    var redCounts = new Uint32Array(256),
+        greenCounts = new Uint32Array(256),
+        blueCounts = new Uint32Array(256);
 
     var totalColorCount = 0;
 
-    var averageRed = 0;
-    var averageGreen = 0;
-    var averageBlue = 0;
+    var averageRed = 0,
+        averageGreen = 0,
+        averageBlue = 0;
 
     for (var red = colorCubeInfo.RedMin; red <= colorCubeInfo.RedMax; red++) {
         for (var green = colorCubeInfo.GreenMin; green <= colorCubeInfo.GreenMax; green++) {
@@ -464,23 +494,29 @@ function TrimColorCube(colorCube, colorCubeInfo) {
                     greenCounts[green] += colorCount;
                     blueCounts[blue] += colorCount;
 
-                    if (red < redMin)
+                    if (red < redMin) {
                         redMin = red;
+                    }
 
-                    if (red > redMax)
+                    if (red > redMax) {
                         redMax = red;
+                    }
 
-                    if (green < greenMin)
+                    if (green < greenMin) {
                         greenMin = green;
+                    }
 
-                    if (green > greenMax)
+                    if (green > greenMax) {
                         greenMax = green;
+                    }
 
-                    if (blue < blueMin)
+                    if (blue < blueMin) {
                         blueMin = blue;
+                    }
 
-                    if (blue > blueMax)
+                    if (blue > blueMax) {
                         blueMax = blue;
+                    }
 
                     averageRed += red * colorCount;
                     averageGreen += green * colorCount;
@@ -503,150 +539,31 @@ function TrimColorCube(colorCube, colorCubeInfo) {
     };
 }
 
-function QuantizeColors(canvas, colorCount) {
-    var colorCube = CreateColorCube(canvas);
-
-    var colorCubeInfos = new Array(TrimColorCube(colorCube, {
-        RedMin: 0, RedMax: 255, GreenMin: 0, GreenMax: 255, BlueMin: 0, BlueMax: 255
-    }));
-
-    while (colorCubeInfos.length < colorCount) {
-        var longestCubeLength = 0;
-        var longestCubeIndex = 0;
-
-        var heaviestCubeCount = 0;
-        var heaviestCubeIndex = 0;
-
-        var redLength;
-        var greenLength;
-        var blueLength;
-
-        for (var i = 0; i < colorCubeInfos.length; i++) {
-            redLength = colorCubeInfos[i].RedMax - colorCubeInfos[i].RedMin;
-            greenLength = colorCubeInfos[i].GreenMax - colorCubeInfos[i].GreenMin;
-            blueLength = colorCubeInfos[i].BlueMax - colorCubeInfos[i].BlueMin;
-
-            if (Math.max(redLength, greenLength, blueLength) > longestCubeLength) {
-                longestCubeLength = Math.max(redLength, greenLength, blueLength);
-                longestCubeIndex = i;
-            }
-
-            if (Math.max(redLength, greenLength, blueLength) > 1 && colorCubeInfos[i].ColorCount > heaviestCubeCount) {
-                heaviestCubeCount = colorCubeInfos[i].ColorCount;
-                heaviestCubeIndex = i;
-            }
-        }
-
-        var oldColorCubeInfo = colorCubeInfos[longestCubeIndex];
-        var newColorCubeInfo = [];
-
-        newColorCubeInfo.RedMin = oldColorCubeInfo.RedMin;
-        newColorCubeInfo.RedMax = oldColorCubeInfo.RedMax;
-        newColorCubeInfo.GreenMin = oldColorCubeInfo.GreenMin;
-        newColorCubeInfo.GreenMax = oldColorCubeInfo.GreenMax;
-        newColorCubeInfo.BlueMin = oldColorCubeInfo.BlueMin;
-        newColorCubeInfo.BlueMax = oldColorCubeInfo.BlueMax;
-
-        redLength = oldColorCubeInfo.RedMax - oldColorCubeInfo.RedMin;
-        greenLength = oldColorCubeInfo.GreenMax - oldColorCubeInfo.GreenMin;
-        blueLength = oldColorCubeInfo.BlueMax - oldColorCubeInfo.BlueMin;
-
-        if (redLength >= greenLength && redLength >= blueLength) {
-            if (redLength > 1) {
-                var lowIndex = oldColorCubeInfo.RedMin;
-                var highIndex = oldColorCubeInfo.RedMax;
-                var lowCount = Math.pow(oldColorCubeInfo.RedCounts[lowIndex], 0.2);
-                var highCount = Math.pow(oldColorCubeInfo.RedCounts[highIndex], 0.2);
-
-                while (lowIndex < highIndex - 1) {
-                    if (lowCount < highCount) {
-                        lowCount += Math.pow(oldColorCubeInfo.RedCounts[++lowIndex], 0.2);
-                    }
-                    else {
-                        highCount += Math.pow(oldColorCubeInfo.RedCounts[--highIndex], 0.2);
-                    }
-                }
-
-                newColorCubeInfo.RedMax = oldColorCubeInfo.RedMax;
-                oldColorCubeInfo.RedMax = oldColorCubeInfo.RedMin + Math.floor(redLength / 2.0);
-                newColorCubeInfo.RedMin = oldColorCubeInfo.RedMax + 1;
-            }
-            else {
-                break;
-            }
-        }
-        else if (greenLength >= redLength && greenLength >= blueLength) {
-            if (greenLength > 1) {
-                var lowIndex = oldColorCubeInfo.GreenMin;
-                var highIndex = oldColorCubeInfo.GreenMax;
-                var lowCount = Math.pow(oldColorCubeInfo.GreenCounts[lowIndex], 0.2);
-                var highCount = Math.pow(oldColorCubeInfo.GreenCounts[highIndex], 0.2);
-
-                while (lowIndex < highIndex - 1) {
-                    if (lowCount < highCount) {
-                        lowCount += oldColorCubeInfo.GreenCounts[++lowIndex];
-                    }
-                    else {
-                        highCount += oldColorCubeInfo.GreenCounts[--highIndex];
-                    }
-                }
-
-                newColorCubeInfo.GreenMax = oldColorCubeInfo.GreenMax;
-                oldColorCubeInfo.GreenMax = oldColorCubeInfo.GreenMin + Math.floor(greenLength / 2.0);
-                newColorCubeInfo.GreenMin = oldColorCubeInfo.GreenMax + 1;
-            }            else {
-                break;
-            }
-        }        else {
-            if (blueLength > 1) {
-                var lowIndex = oldColorCubeInfo.BlueMin;
-                var highIndex = oldColorCubeInfo.BlueMax;
-                var lowCount = Math.pow(oldColorCubeInfo.BlueCounts[lowIndex], 0.2);
-                var highCount = Math.pow(oldColorCubeInfo.BlueCounts[highIndex], 0.2);
-
-                while (lowIndex < highIndex - 1) {
-                    if (lowCount < highCount) {
-                        lowCount += Math.pow(oldColorCubeInfo.BlueCounts[++lowIndex], 0.2);
-                    }
-                    else {
-                        highCount += Math.pow(oldColorCubeInfo.BlueCounts[--highIndex], 0.2);
-                    }
-                }
-
-                newColorCubeInfo.BlueMax = oldColorCubeInfo.BlueMax;
-                oldColorCubeInfo.BlueMax = oldColorCubeInfo.BlueMin + Math.floor(blueLength / 2.0);
-                newColorCubeInfo.BlueMin = oldColorCubeInfo.BlueMax + 1;
-            }            else {
-                break;
-            }
-        }
-
-        colorCubeInfos[longestCubeIndex] = TrimColorCube(colorCube, oldColorCubeInfo);
-        colorCubeInfos.push(TrimColorCube(colorCube, newColorCubeInfo));
-    }
-
-    return colorCubeInfos;
-}
-
-function QuantizationCountWeight(count) {
+function quantizationCountWeight(count) {
     return Math.pow(count, 0.2);
 }
 
-function QuantizeRecursive(colorCube, colorCubeInfo, palette, recursionDepth, maxRecursionDepth) {
+function quantizeRecursive(colorCube, colorCubeInfo, palette, recursionDepth, maxRecursionDepth) {
     var redLength = colorCubeInfo.RedMax - colorCubeInfo.RedMin;
     var greenLength = colorCubeInfo.GreenMax - colorCubeInfo.GreenMin;
     var blueLength = colorCubeInfo.BlueMax - colorCubeInfo.BlueMin;
 
-    if (Math.max(redLength, greenLength, blueLength) == 1)
+    if (Math.max(redLength, greenLength, blueLength) == 1) {
         return;
+    }
 
     if (recursionDepth == maxRecursionDepth) {
-        palette.push({Red: colorCubeInfo.Red, Green: colorCubeInfo.Green, Blue: colorCubeInfo.Blue});
+        palette.push({
+            Red:   colorCubeInfo.Red,
+            Green: colorCubeInfo.Green,
+            Blue:  colorCubeInfo.Blue
+        });
 
         return;
     }
 
-    var newColorCubeInfo = [];
+    var newColorCubeInfo = [],
+        lowIndex, highIndex, lowCount, highCount;
 
     newColorCubeInfo.RedMin = colorCubeInfo.RedMin;
     newColorCubeInfo.RedMax = colorCubeInfo.RedMax;
@@ -656,53 +573,48 @@ function QuantizeRecursive(colorCube, colorCubeInfo, palette, recursionDepth, ma
     newColorCubeInfo.BlueMax = colorCubeInfo.BlueMax;
 
     if (redLength >= greenLength && redLength >= blueLength) {
-        var lowIndex = colorCubeInfo.RedMin;
-        var highIndex = colorCubeInfo.RedMax;
-        var lowCount = QuantizationCountWeight(colorCubeInfo.RedCounts[lowIndex]);
-        var highCount = QuantizationCountWeight(colorCubeInfo.RedCounts[highIndex]);
+        lowIndex = colorCubeInfo.RedMin;
+        highIndex = colorCubeInfo.RedMax;
+        lowCount = quantizationCountWeight(colorCubeInfo.RedCounts[lowIndex]);
+        highCount = quantizationCountWeight(colorCubeInfo.RedCounts[highIndex]);
 
         while (lowIndex < highIndex - 1) {
             if (lowCount < highCount) {
-                lowCount += QuantizationCountWeight(colorCubeInfo.RedCounts[++lowIndex]);
-            }
-            else {
-                highCount += QuantizationCountWeight(colorCubeInfo.RedCounts[--highIndex]);
+                lowCount += quantizationCountWeight(colorCubeInfo.RedCounts[++lowIndex]);
+            } else {
+                highCount += quantizationCountWeight(colorCubeInfo.RedCounts[--highIndex]);
             }
         }
 
         colorCubeInfo.RedMax = lowIndex;
         newColorCubeInfo.RedMin = highIndex;
-    }
-    else if (greenLength >= redLength && greenLength >= blueLength) {
-        var lowIndex = colorCubeInfo.GreenMin;
-        var highIndex = colorCubeInfo.GreenMax;
-        var lowCount = QuantizationCountWeight(colorCubeInfo.GreenCounts[lowIndex]);
-        var highCount = QuantizationCountWeight(colorCubeInfo.GreenCounts[highIndex]);
+    } else if (greenLength >= redLength && greenLength >= blueLength) {
+        lowIndex = colorCubeInfo.GreenMin;
+        highIndex = colorCubeInfo.GreenMax;
+        lowCount = quantizationCountWeight(colorCubeInfo.GreenCounts[lowIndex]);
+        highCount = quantizationCountWeight(colorCubeInfo.GreenCounts[highIndex]);
 
         while (lowIndex < highIndex - 1) {
             if (lowCount < highCount) {
-                lowCount += QuantizationCountWeight(colorCubeInfo.GreenCounts[++lowIndex]);
-            }
-            else {
-                highCount += QuantizationCountWeight(colorCubeInfo.GreenCounts[--highIndex]);
+                lowCount += quantizationCountWeight(colorCubeInfo.GreenCounts[++lowIndex]);
+            } else {
+                highCount += quantizationCountWeight(colorCubeInfo.GreenCounts[--highIndex]);
             }
         }
 
         colorCubeInfo.GreenMax = lowIndex;
         newColorCubeInfo.GreenMin = highIndex;
-    }
-    else {
-        var lowIndex = colorCubeInfo.BlueMin;
-        var highIndex = colorCubeInfo.BlueMax;
-        var lowCount = QuantizationCountWeight(colorCubeInfo.BlueCounts[lowIndex]);
-        var highCount = QuantizationCountWeight(colorCubeInfo.BlueCounts[highIndex]);
+    } else {
+        lowIndex = colorCubeInfo.BlueMin;
+        highIndex = colorCubeInfo.BlueMax;
+        lowCount = quantizationCountWeight(colorCubeInfo.BlueCounts[lowIndex]);
+        highCount = quantizationCountWeight(colorCubeInfo.BlueCounts[highIndex]);
 
         while (lowIndex < highIndex - 1) {
             if (lowCount < highCount) {
-                lowCount += QuantizationCountWeight(colorCubeInfo.BlueCounts[++lowIndex]);
-            }
-            else {
-                highCount += QuantizationCountWeight(colorCubeInfo.BlueCounts[--highIndex]);
+                lowCount += quantizationCountWeight(colorCubeInfo.BlueCounts[++lowIndex]);
+            } else {
+                highCount += quantizationCountWeight(colorCubeInfo.BlueCounts[--highIndex]);
             }
         }
 
@@ -710,14 +622,16 @@ function QuantizeRecursive(colorCube, colorCubeInfo, palette, recursionDepth, ma
         newColorCubeInfo.BlueMin = highIndex;
     }
 
-    QuantizeRecursive(colorCube, TrimColorCube(colorCube, colorCubeInfo), palette, recursionDepth + 1, maxRecursionDepth);
-    QuantizeRecursive(colorCube, TrimColorCube(colorCube, newColorCubeInfo), palette, recursionDepth + 1, maxRecursionDepth);
+    quantizeRecursive(colorCube, trimColorCube(colorCube, colorCubeInfo), palette, recursionDepth + 1, maxRecursionDepth);
+    quantizeRecursive(colorCube, trimColorCube(colorCube, newColorCubeInfo), palette, recursionDepth + 1, maxRecursionDepth);
 }
 
-function RemapImage(canvas, palette, floydSteinbergFactor) {
-    var floydSteinbergCoefficients = [7 * floydSteinbergFactor, 3 * floydSteinbergFactor, 5 * floydSteinbergFactor, 1 * floydSteinbergFactor]; // (7, 3, 5, 1) = standard.
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
+function remapImage(canvas, palette, floydSteinbergFactor) {
+    var floydSteinbergCoefficients = [7 * floydSteinbergFactor, 3 * floydSteinbergFactor, 5 * floydSteinbergFactor, 1 * floydSteinbergFactor],
+        // (7, 3, 5, 1) = standard
+        context = canvas.getContext("2d"),
+        data = context.getImageData(0, 0, canvas.width, canvas.height),
+        redDelta, greenDelta, blueDelta;
 
     for (var y = 0; y < canvas.height; y++) {
         for (var x = 0; x < canvas.width; x++) {
@@ -729,15 +643,14 @@ function RemapImage(canvas, palette, floydSteinbergFactor) {
             var alpha = data.data[pixelIndex + 3];
 
             if (alpha == 255) {
-                // Find the matching color index.
-
+                // Find the matching color index
                 var lastDistance = Number.MAX_VALUE;
                 var remappedPaletteIndex = 0;
 
                 for (var paletteIndex = 0; paletteIndex < palette.length; paletteIndex++) {
-                    var redDelta = palette[paletteIndex].Red - red;
-                    var greenDelta = palette[paletteIndex].Green - green;
-                    var blueDelta = palette[paletteIndex].Blue - blue;
+                    redDelta = palette[paletteIndex].Red - red;
+                    greenDelta = palette[paletteIndex].Green - green;
+                    blueDelta = palette[paletteIndex].Blue - blue;
 
                     var distance = redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta;
 
@@ -748,9 +661,9 @@ function RemapImage(canvas, palette, floydSteinbergFactor) {
                 }
 
                 if (floydSteinbergFactor != 0) {
-                    var redDelta = palette[remappedPaletteIndex].Red - red;
-                    var greenDelta = palette[remappedPaletteIndex].Green - green;
-                    var blueDelta = palette[remappedPaletteIndex].Blue - blue;
+                    redDelta = palette[remappedPaletteIndex].Red - red;
+                    greenDelta = palette[remappedPaletteIndex].Green - green;
+                    blueDelta = palette[remappedPaletteIndex].Blue - blue;
 
                     if (x < canvas.width - 1) {
                         data.data[pixelIndex + 4] = Math.round(Math.min(255, Math.max(0, data.data[pixelIndex + 4] - redDelta * floydSteinbergCoefficients[0] / 16)));
@@ -788,20 +701,19 @@ function RemapImage(canvas, palette, floydSteinbergFactor) {
     context.putImageData(data, 0, 0);
 }
 
-function RemapImageLuminance(canvas, colors, ditherPattern) {
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
-
-    var mixedColors = [];
+function remapImageLuminance(canvas, colors, ditherPattern) {
+    var context = canvas.getContext("2d"),
+        data = context.getImageData(0, 0, canvas.width, canvas.height),
+        mixedColors = [],
+        luminance2, colorIndex, distance,
+        redDelta, greenDelta, blueDelta, luminanceDelta;
 
     if (ditherPattern && ditherPattern[0] == 1 && colors.length <= 64) {
         var colorCount = colors.length;
 
         for (var index1 = 0; index1 < colorCount; index1++) {
             for (var index2 = index1 + 1; index2 < colorCount; index2++) {
-                var luminance1 = colors[index1].Red * 0.21 + colors[index1].Green * 0.72 + colors[index1].Blue * 0.07;
-                var luminance2 = colors[index2].Red * 0.21 + colors[index2].Green * 0.72 + colors[index2].Blue * 0.07;
-                var luminanceDeltaSquare = (luminance1 - luminance2) * (luminance1 - luminance2);
+                luminance2 = colors[index2].Red * 0.21 + colors[index2].Green * 0.72 + colors[index2].Blue * 0.07;
 
                 mixedColors.push({
                     Index1: index1, Index2: index2, Red: Math.round((colors[index1].Red + colors[index2].Red) / 2.0),
@@ -823,19 +735,19 @@ function RemapImageLuminance(canvas, colors, ditherPattern) {
             var luminance = red * 0.21 + green * 0.72 + blue * 0.07;
 
             if (alpha == 255) {
-                // Find the matching color index.
+                // Find the matching color index
                 var lastDistance = Number.MAX_VALUE;
                 var remappedColorIndex = 0;
 
-                for (var colorIndex = 0; colorIndex < colors.length; colorIndex++) {
-                    var redDelta = colors[colorIndex].Red - red;
-                    var greenDelta = colors[colorIndex].Green - green;
-                    var blueDelta = colors[colorIndex].Blue - blue;
+                for (colorIndex = 0; colorIndex < colors.length; colorIndex++) {
+                    redDelta = colors[colorIndex].Red - red;
+                    greenDelta = colors[colorIndex].Green - green;
+                    blueDelta = colors[colorIndex].Blue - blue;
 
-                    var luminance2 = colors[colorIndex].Red * 0.21 + colors[colorIndex].Green * 0.72 + colors[colorIndex].Blue * 0.07;
-                    var luminanceDelta = luminance2 - luminance;
+                    luminance2 = colors[colorIndex].Red * 0.21 + colors[colorIndex].Green * 0.72 + colors[colorIndex].Blue * 0.07;
+                    luminanceDelta = luminance2 - luminance;
 
-                    var distance = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
+                    distance = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
 
                     if (distance < lastDistance) {
                         remappedColorIndex = colorIndex;
@@ -844,15 +756,14 @@ function RemapImageLuminance(canvas, colors, ditherPattern) {
                 }
 
                 if (ditherPattern) {
-                    if (ditherPattern[0] == 1) // Checker pattern.
-                    {
-                        for (var colorIndex = 0; colorIndex < mixedColors.length; colorIndex++) {
-                            var redDelta = mixedColors[colorIndex].Red - red;
-                            var greenDelta = mixedColors[colorIndex].Green - green;
-                            var blueDelta = mixedColors[colorIndex].Blue - blue;
+                    if (ditherPattern[0] == 1) { // Checker pattern
+                        for (colorIndex = 0; colorIndex < mixedColors.length; colorIndex++) {
+                            redDelta = mixedColors[colorIndex].Red - red;
+                            greenDelta = mixedColors[colorIndex].Green - green;
+                            blueDelta = mixedColors[colorIndex].Blue - blue;
 
-                            var luminance2 = mixedColors[colorIndex].Red * 0.21 + mixedColors[colorIndex].Green * 0.72 + mixedColors[colorIndex].Blue * 0.07;
-                            var luminanceDelta = luminance2 - luminance;
+                            luminance2 = mixedColors[colorIndex].Red * 0.21 + mixedColors[colorIndex].Green * 0.72 + mixedColors[colorIndex].Blue * 0.07;
+                            luminanceDelta = luminance2 - luminance;
 
                             var distance1 = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
 
@@ -874,7 +785,7 @@ function RemapImageLuminance(canvas, colors, ditherPattern) {
 
                             var distance3 = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
 
-                            var distance = (distance1 * 8 + distance2 + distance3) / 10;
+                            distance = (distance1 * 8 + distance2 + distance3) / 10;
 
                             if (distance < lastDistance) {
                                 remappedColorIndex = ((x ^ y) & 1) ? mixedColors[colorIndex].Index1 : mixedColors[colorIndex].Index2;
@@ -882,9 +793,9 @@ function RemapImageLuminance(canvas, colors, ditherPattern) {
                             }
                         }
                     } else { // Error diffusion
-                        var redDelta = colors[remappedColorIndex].Red - red;
-                        var greenDelta = colors[remappedColorIndex].Green - green;
-                        var blueDelta = colors[remappedColorIndex].Blue - blue;
+                        redDelta = colors[remappedColorIndex].Red - red;
+                        greenDelta = colors[remappedColorIndex].Green - green;
+                        blueDelta = colors[remappedColorIndex].Blue - blue;
 
                         if (x < canvas.width - 2) {
                             if (ditherPattern[4]) {
@@ -979,12 +890,10 @@ function RemapImageLuminance(canvas, colors, ditherPattern) {
     context.putImageData(data, 0, 0);
 }
 
-function RemapZxSpectrumImageLuminance1(canvas, colors, ditherPattern) {
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
-
-    var canvasList = [];
-    var colorsMatrix = new Array(Math.ceil(canvas.width / 8) * Math.ceil(canvas.height / 8));
+function remapZxSpectrumImageLuminance1(canvas, colors, ditherPattern) {
+    var context = canvas.getContext("2d"),
+        data = context.getImageData(0, 0, canvas.width, canvas.height),
+        canvasList = [];
 
     // Create a valid colors list
     for (var index1 = 0; index1 < 8 - 1; index1++) {
@@ -997,7 +906,7 @@ function RemapZxSpectrumImageLuminance1(canvas, colors, ditherPattern) {
 
             newCanvas.getContext("2d").drawImage(canvas, 0, 0);
 
-            RemapImageLuminance(newCanvas, [
+            remapImageLuminance(newCanvas, [
                 {
                     Red: colors[index1].Red, Green: colors[index1].Green, Blue: colors[index1].Blue
                 }, {
@@ -1013,8 +922,7 @@ function RemapZxSpectrumImageLuminance1(canvas, colors, ditherPattern) {
                 ]
             });
 
-            // Second color block entry.
-
+            // Second color block entry
             newCanvas = document.createElement("canvas");
 
             newCanvas.width = canvas.width;
@@ -1022,7 +930,7 @@ function RemapZxSpectrumImageLuminance1(canvas, colors, ditherPattern) {
 
             newCanvas.getContext("2d").drawImage(canvas, 0, 0);
 
-            RemapImageLuminance(newCanvas, [
+            remapImageLuminance(newCanvas, [
                 {
                     Red: colors[index1 + 8].Red, Green: colors[index1 + 8].Green, Blue: colors[index1 + 8].Blue
                 }, {
@@ -1053,18 +961,20 @@ function RemapZxSpectrumImageLuminance1(canvas, colors, ditherPattern) {
                     for (var x2 = 0; x2 < 8; x2++) {
                         var pixelIndex = (x * 8 + x2 + (y * 8 + y2) * canvas.width) * 4;
 
-                        var red = data.data[pixelIndex];
-                        var green = data.data[pixelIndex + 1];
-                        var blue = data.data[pixelIndex + 2];
-                        var alpha = data.data[pixelIndex + 3];
-                        var luminance = red * 0.21 + green * 0.72 + blue * 0.07;
+                        var red = data.data[pixelIndex],
+                            green = data.data[pixelIndex + 1],
+                            blue = data.data[pixelIndex + 2],
+                            luminance = red * 0.21 + green * 0.72 + blue * 0.07;
 
                         // First color
-                        var redDelta = canvasList[colorsListIndex].Colors[0].Red - red;
-                        var greenDelta = canvasList[colorsListIndex].Colors[0].Green - green;
-                        var blueDelta = canvasList[colorsListIndex].Colors[0].Blue - blue;
+                        var redDelta = canvasList[colorsListIndex].Colors[0].Red - red,
+                            greenDelta = canvasList[colorsListIndex].Colors[0].Green - green,
+                            blueDelta = canvasList[colorsListIndex].Colors[0].Blue - blue;
 
-                        var luminance2 = canvasList[colorsListIndex].Colors[0].Red * 0.21 + canvasList[colorsListIndex].Colors[0].Green * 0.72 + canvasList[colorsListIndex].Colors[0].Blue * 0.07;
+                        var luminance2 = canvasList[colorsListIndex].Colors[0].Red * 0.21
+                            + canvasList[colorsListIndex].Colors[0].Green * 0.72
+                            + canvasList[colorsListIndex].Colors[0].Blue * 0.07;
+
                         var luminanceDelta = luminance2 - luminance;
 
                         var distance = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
@@ -1094,243 +1004,11 @@ function RemapZxSpectrumImageLuminance1(canvas, colors, ditherPattern) {
     }
 }
 
-function RemapZxSpectrumImageLuminance2(canvas, colors, ditherPattern) {
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
-
-    var canvasList = [];
-    var colorsMatrix = new Array(Math.ceil(canvas.width / 8) * Math.ceil(canvas.height / 8));
-
-    // Create a valid colors list
-    for (var index1 = 0; index1 < 8 - 1; index1++) {
-        for (var index2 = index1 + 1; index2 < 8; index2++) {
-            // First color block entry
-            var newCanvas = document.createElement("canvas");
-
-            newCanvas.width = canvas.width;
-            newCanvas.height = canvas.height;
-
-            newCanvas.getContext("2d").drawImage(canvas, 0, 0);
-
-            RemapImageLuminance(newCanvas, [
-                {
-                    Red: colors[index1].Red, Green: colors[index1].Green, Blue: colors[index1].Blue
-                }, {
-                    Red: colors[index2].Red, Green: colors[index2].Green, Blue: colors[index2].Blue
-                }
-            ], ditherPattern);
-
-            canvasList.push({
-                Canvas: newCanvas, Colors: [
-                    {
-                        Red: colors[index1].Red, Green: colors[index1].Green, Blue: colors[index1].Blue
-                    }, {Red: colors[index2].Red, Green: colors[index2].Green, Blue: colors[index2].Blue}
-                ]
-            });
-
-            // Second color block entry.
-
-            newCanvas = document.createElement("canvas");
-
-            newCanvas.width = canvas.width;
-            newCanvas.height = canvas.height;
-
-            newCanvas.getContext("2d").drawImage(canvas, 0, 0);
-
-            RemapImageLuminance(newCanvas, [
-                {
-                    Red: colors[index1 + 8].Red, Green: colors[index1 + 8].Green, Blue: colors[index1 + 8].Blue
-                }, {
-                    Red: colors[index2 + 8].Red, Green: colors[index2 + 8].Green, Blue: colors[index2 + 8].Blue
-                }
-            ], ditherPattern);
-
-            canvasList.push({
-                Canvas: newCanvas, Colors: [
-                    {
-                        Red: colors[index1 + 8].Red, Green: colors[index1 + 8].Green, Blue: colors[index1 + 8].Blue
-                    }, {Red: colors[index2 + 8].Red, Green: colors[index2 + 8].Green, Blue: colors[index2 + 8].Blue}
-                ]
-            });
-        }
-    }
-
-    // Create colors matrix
-    for (var y = 0; y < Math.ceil(canvas.height / 8); y++) {
-        for (var x = 0; x < Math.ceil(canvas.width / 8); x++) {
-            var bestColorsListIndex = 0;
-            var lastDistance = Number.MAX_VALUE;
-
-            for (var colorsListIndex = 0; colorsListIndex < canvasList.length; colorsListIndex++) {
-                var totalDistance = 0;
-                var data2 = canvasList[colorsListIndex].Canvas.getContext("2d").getImageData(0, 0, canvasList[colorsListIndex].Canvas.width, canvasList[colorsListIndex].Canvas.height);
-
-                for (var y2 = 0; y2 < 8; y2++) {
-                    for (var x2 = 0; x2 < 8; x2++) {
-                        var pixelIndex1 = (x * 8 + x2 + (y * 8 + y2) * canvas.width) * 4;
-                        var pixelIndex2 = (x * 8 + x2 + (y * 8 + y2) * canvasList[colorsListIndex].Canvas.width) * 4;
-
-                        var alpha = data.data[pixelIndex1 + 3];
-
-                        if (alpha == 255) {
-                            var red1 = data.data[pixelIndex1];
-                            var green1 = data.data[pixelIndex1 + 1];
-                            var blue1 = data.data[pixelIndex1 + 2];
-                            var luminance1 = red1 * 0.21 + green1 * 0.72 + blue1 * 0.07;
-
-                            var red2 = data2.data[pixelIndex2];
-                            var green2 = data2.data[pixelIndex2 + 1];
-                            var blue2 = data2.data[pixelIndex2 + 2];
-                            var luminance2 = red2 * 0.21 + green2 * 0.72 + blue2 * 0.07;
-
-                            var redDelta = red2 - red1;
-                            var greenDelta = green2 - green1;
-                            var blueDelta = blue2 - blue1;
-                            var luminanceDelta = luminance2 - luminance1;
-
-                            var distance = redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta;
-
-                            totalDistance += distance;
-                        }
-                    }
-                }
-
-                if (totalDistance < lastDistance) {
-                    bestColorsListIndex = colorsListIndex;
-                    lastDistance = totalDistance;
-                }
-            }
-
-            canvas.getContext("2d").drawImage(canvasList[bestColorsListIndex].Canvas, x * 8, y * 8, 8, 8, x * 8, y * 8, 8, 8);
-        }
-    }
-}
-
-function RemapZxSpectrumImageLuminance3(canvas, colors, ditherPattern) {
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
-
-    var canvasList = [];
-    var colorsMatrix = new Array(Math.ceil(canvas.width / 8) * Math.ceil(canvas.height / 8));
-
-    // Create a valid colors list
-    for (var index1 = 0; index1 < 8 - 1; index1++) {
-        for (var index2 = index1 + 1; index2 < 8; index2++) {
-            // First color block entry
-            var newCanvas = document.createElement("canvas");
-
-            newCanvas.width = canvas.width;
-            newCanvas.height = canvas.height;
-
-            newCanvas.getContext("2d").drawImage(canvas, 0, 0);
-
-            RemapImageLuminance(newCanvas, [
-                {
-                    Red: colors[index1].Red, Green: colors[index1].Green, Blue: colors[index1].Blue
-                }, {
-                    Red: colors[index2].Red, Green: colors[index2].Green, Blue: colors[index2].Blue
-                }
-            ], ditherPattern);
-
-            canvasList.push({
-                Canvas: newCanvas, Colors: [
-                    {
-                        Red: colors[index1].Red, Green: colors[index1].Green, Blue: colors[index1].Blue
-                    }, {Red: colors[index2].Red, Green: colors[index2].Green, Blue: colors[index2].Blue}
-                ]
-            });
-
-            // Second color block entry.
-
-            newCanvas = document.createElement("canvas");
-
-            newCanvas.width = canvas.width;
-            newCanvas.height = canvas.height;
-
-            newCanvas.getContext("2d").drawImage(canvas, 0, 0);
-
-            RemapImageLuminance(newCanvas, [
-                {
-                    Red: colors[index1 + 8].Red, Green: colors[index1 + 8].Green, Blue: colors[index1 + 8].Blue
-                }, {
-                    Red: colors[index2 + 8].Red, Green: colors[index2 + 8].Green, Blue: colors[index2 + 8].Blue
-                }
-            ], ditherPattern);
-
-            canvasList.push({
-                Canvas: newCanvas, Colors: [
-                    {
-                        Red: colors[index1 + 8].Red, Green: colors[index1 + 8].Green, Blue: colors[index1 + 8].Blue
-                    }, {Red: colors[index2 + 8].Red, Green: colors[index2 + 8].Green, Blue: colors[index2 + 8].Blue}
-                ]
-            });
-        }
-    }
-
-    // Create colors matrix.
-
-    for (var y = 0; y < Math.ceil(canvas.height / 8); y++) {
-        for (var x = 0; x < Math.ceil(canvas.width / 8); x++) {
-            var bestColorsListIndex = 0;
-            var lastDistance = Number.MAX_VALUE;
-
-            for (var colorsListIndex = 0; colorsListIndex < canvasList.length; colorsListIndex++) {
-                var red1 = 0;
-                var green1 = 0;
-                var blue1 = 0;
-
-                var red2 = 0;
-                var green2 = 0;
-                var blue2 = 0;
-
-                var data2 = canvasList[colorsListIndex].Canvas.getContext("2d").getImageData(0, 0, canvasList[colorsListIndex].Canvas.width, canvasList[colorsListIndex].Canvas.height);
-
-                for (var y2 = 0; y2 < 8; y2++) {
-                    for (var x2 = 0; x2 < 8; x2++) {
-                        var pixelIndex1 = (x * 8 + x2 + (y * 8 + y2) * canvas.width) * 4;
-                        var pixelIndex2 = (x * 8 + x2 + (y * 8 + y2) * canvasList[colorsListIndex].Canvas.width) * 4;
-
-                        red1 += data.data[pixelIndex1];
-                        green1 += data.data[pixelIndex1 + 1];
-                        blue1 += data.data[pixelIndex1 + 2];
-
-                        red2 += data2.data[pixelIndex2];
-                        green2 += data2.data[pixelIndex2 + 1];
-                        blue2 += data2.data[pixelIndex2 + 2];
-                    }
-                }
-
-                var red1 = red1 >> 6;
-                var green1 = green1 >> 6;
-                var blue1 = blue1 >> 6;
-                var luminance1 = red1 * 0.21 + green1 * 0.72 + blue1 * 0.07;
-
-                var red2 = red2 >> 6;
-                var green2 = green2 >> 6;
-                var blue2 = blue2 >> 6;
-                var luminance2 = red2 * 0.21 + green2 * 0.72 + blue2 * 0.07;
-
-                var redDelta = red2 - red1;
-                var greenDelta = green2 - green1;
-                var blueDelta = blue2 - blue1;
-                var luminanceDelta = luminance2 - luminance1;
-
-                var distance = redDelta * redDelta * 0.21 + greenDelta * greenDelta * 0.72 + blueDelta * blueDelta * 0.07;
-
-                if (distance < lastDistance) {
-                    bestColorsListIndex = colorsListIndex;
-                    lastDistance = distance;
-                }
-            }
-
-            canvas.getContext("2d").drawImage(canvasList[bestColorsListIndex].Canvas, x * 8, y * 8, 8, 8, x * 8, y * 8, 8, 8);
-        }
-    }
-}
-
-function RemapLineColorsImageLuminance(canvas, lineColors, ditherPattern) {
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
+function remapLineColorsImageLuminance(canvas, lineColors, ditherPattern) {
+    var context = canvas.getContext("2d"),
+        data = context.getImageData(0, 0, canvas.width, canvas.height),
+        luminance2, colorIndex, distance,
+        redDelta, greenDelta, blueDelta, luminanceDelta;
 
     for (var y = 0; y < canvas.height; y++) {
         var colors = lineColors[y];
@@ -1342,9 +1020,7 @@ function RemapLineColorsImageLuminance(canvas, lineColors, ditherPattern) {
 
             for (var index1 = 0; index1 < colorCount; index1++) {
                 for (var index2 = index1 + 1; index2 < colorCount; index2++) {
-                    var luminance1 = colors[index1].Red * 0.21 + colors[index1].Green * 0.72 + colors[index1].Blue * 0.07;
-                    var luminance2 = colors[index2].Red * 0.21 + colors[index2].Green * 0.72 + colors[index2].Blue * 0.07;
-                    var luminanceDeltaSquare = (luminance1 - luminance2) * (luminance1 - luminance2);
+                    luminance2 = colors[index2].Red * 0.21 + colors[index2].Green * 0.72 + colors[index2].Blue * 0.07;
 
                     mixedColors.push({
                         Index1: index1, Index2: index2,
@@ -1366,20 +1042,19 @@ function RemapLineColorsImageLuminance(canvas, lineColors, ditherPattern) {
             var luminance = red * 0.21 + green * 0.72 + blue * 0.07;
 
             if (alpha == 255) {
-                // Find the matching color index.
-
+                // Find the matching color index
                 var lastDistance = Number.MAX_VALUE;
                 var remappedColorIndex = 0;
 
-                for (var colorIndex = 0; colorIndex < colors.length; colorIndex++) {
-                    var redDelta = colors[colorIndex].Red - red;
-                    var greenDelta = colors[colorIndex].Green - green;
-                    var blueDelta = colors[colorIndex].Blue - blue;
+                for (colorIndex = 0; colorIndex < colors.length; colorIndex++) {
+                    redDelta = colors[colorIndex].Red - red;
+                    greenDelta = colors[colorIndex].Green - green;
+                    blueDelta = colors[colorIndex].Blue - blue;
 
-                    var luminance2 = colors[colorIndex].Red * 0.21 + colors[colorIndex].Green * 0.72 + colors[colorIndex].Blue * 0.07;
-                    var luminanceDelta = luminance2 - luminance;
+                    luminance2 = colors[colorIndex].Red * 0.21 + colors[colorIndex].Green * 0.72 + colors[colorIndex].Blue * 0.07;
+                    luminanceDelta = luminance2 - luminance;
 
-                    var distance = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
+                    distance = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
 
                     if (distance < lastDistance) {
                         remappedColorIndex = colorIndex;
@@ -1389,13 +1064,13 @@ function RemapLineColorsImageLuminance(canvas, lineColors, ditherPattern) {
 
                 if (ditherPattern) {
                     if (ditherPattern[0] == 1) { // Checker pattern
-                        for (var colorIndex = 0; colorIndex < mixedColors.length; colorIndex++) {
-                            var redDelta = mixedColors[colorIndex].Red - red;
-                            var greenDelta = mixedColors[colorIndex].Green - green;
-                            var blueDelta = mixedColors[colorIndex].Blue - blue;
+                        for (colorIndex = 0; colorIndex < mixedColors.length; colorIndex++) {
+                            redDelta = mixedColors[colorIndex].Red - red;
+                            greenDelta = mixedColors[colorIndex].Green - green;
+                            blueDelta = mixedColors[colorIndex].Blue - blue;
 
-                            var luminance2 = mixedColors[colorIndex].Red * 0.21 + mixedColors[colorIndex].Green * 0.72 + mixedColors[colorIndex].Blue * 0.07;
-                            var luminanceDelta = luminance2 - luminance;
+                            luminance2 = mixedColors[colorIndex].Red * 0.21 + mixedColors[colorIndex].Green * 0.72 + mixedColors[colorIndex].Blue * 0.07;
+                            luminanceDelta = luminance2 - luminance;
 
                             var distance1 = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
 
@@ -1417,19 +1092,17 @@ function RemapLineColorsImageLuminance(canvas, lineColors, ditherPattern) {
 
                             var distance3 = (redDelta * redDelta + greenDelta * greenDelta + blueDelta * blueDelta) * 0.5 + luminanceDelta * luminanceDelta;
 
-                            var distance = (distance1 * 8 + distance2 + distance3) / 10;
+                            distance = (distance1 * 8 + distance2 + distance3) / 10;
 
                             if (distance < lastDistance) {
                                 remappedColorIndex = ((x ^ y) & 1) ? mixedColors[colorIndex].Index1 : mixedColors[colorIndex].Index2;
                                 lastDistance = distance;
                             }
                         }
-                    }
-                    else // Error diffusion.
-                    {
-                        var redDelta = colors[remappedColorIndex].Red - red;
-                        var greenDelta = colors[remappedColorIndex].Green - green;
-                        var blueDelta = colors[remappedColorIndex].Blue - blue;
+                    } else { // Error diffusion
+                        redDelta = colors[remappedColorIndex].Red - red;
+                        greenDelta = colors[remappedColorIndex].Green - green;
+                        blueDelta = colors[remappedColorIndex].Blue - blue;
 
                         if (x < canvas.width - 2) {
                             if (ditherPattern[4]) {
@@ -1524,28 +1197,25 @@ function RemapLineColorsImageLuminance(canvas, lineColors, ditherPattern) {
     context.putImageData(data, 0, 0);
 }
 
-function RemapFullPaletteImageLuminance(canvas, bitsPerColor, ditherPattern) {
-    var context = canvas.getContext("2d");
-    var data = context.getImageData(0, 0, canvas.width, canvas.height);
-    var shadesPerColor = 1 << bitsPerColor;
+function remapFullPaletteImageLuminance(canvas, bitsPerColor, ditherPattern) {
+    var context = canvas.getContext("2d"),
+        data = context.getImageData(0, 0, canvas.width, canvas.height),
+        shadesPerColor = 1 << bitsPerColor;
 
     for (var y = 0; y < canvas.height; y++) {
         for (var x = 0; x < canvas.width; x++) {
             var pixelIndex = (x + y * canvas.width) * 4;
 
-            var red = data.data[pixelIndex];
-            var green = data.data[pixelIndex + 1];
-            var blue = data.data[pixelIndex + 2];
-            var alpha = data.data[pixelIndex + 3];
-            var luminance = red * 0.21 + green * 0.72 + blue * 0.07;
+            var red = data.data[pixelIndex],
+                green = data.data[pixelIndex + 1],
+                blue = data.data[pixelIndex + 2],
+                alpha = data.data[pixelIndex + 3];
 
             if (alpha == 255) {
                 if (ditherPattern) {
-                    if (ditherPattern[0] == 1) // Checker pattern.
-                    {
-                    }
-                    else // Error diffusion.
-                    {
+                    if (ditherPattern[0] == 1) { // Checker pattern
+                        //
+                    } else { // Error diffusion
                         var matchingRed = Math.floor(Math.floor(red * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
                         var matchingGreen = Math.floor(Math.floor(green * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
                         var matchingBlue = Math.floor(Math.floor(blue * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
@@ -1647,52 +1317,12 @@ function RemapFullPaletteImageLuminance(canvas, bitsPerColor, ditherPattern) {
     context.putImageData(data, 0, 0);
 }
 
-function CreateBlob(imageCanvas) {
-    var blobData = new Uint16Array(imageCanvas.width * imageCanvas.height);
-
-    var imageContext = imageCanvas.getContext("2d");
-    var data = imageContext.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
-
-    for (var tY = 0; tY < imageCanvas.height; tY++) {
-        for (var tX = 0; tX < imageCanvas.width; tX++) {
-            var pixelIndex = (tX + tY * imageCanvas.width) * 4;
-
-            var tRed = data.data[pixelIndex];
-            var tGreen = data.data[pixelIndex + 1];
-            var tBlue = data.data[pixelIndex + 2];
-
-            var tTrueColor = tRed << 8 | tGreen << 3 | tBlue >> 3;
-
-            blobData[tX + tY * imageCanvas.width] = ((tTrueColor & 0xff) << 8) | (tTrueColor >> 8);
-        }
-    }
-
-    return blobData;
-}
-
-function CreateDownloadLink(elementId, imageCanvas, fileName) {
-    var imageBlob = CreateBlob(imageCanvas);
-
-    var element = document.getElementById(elementId);
-
-    element.innerHTML = imageCanvas.width + " x " + imageCanvas.height + " pixels, " + (imageBlob.length * 2) + " bytes: ";
-
-    var linkElement = document.createElement("a");
-    var text = document.createTextNode(fileName);
-
-    linkElement.appendChild(text);
-    linkElement.title = "True color data";
-    linkElement.href = URL.createObjectURL(new Blob([imageBlob], {type: "application/octet-binary"}));
-    linkElement.download = fileName;
-
-    element.appendChild(linkElement);
-}
-
-function CreateImageWindow(imageInfos) {
+function createImageWindow(imageInfos) {
     var imageScaleFactor = 1;
 
-    while (imageInfos.Image.width * imageScaleFactor < 640)
+    while (imageInfos.Image.width * imageScaleFactor < 640) {
         imageScaleFactor++;
+    }
 
     var originalCanvas = document.createElement("canvas");
 
@@ -1703,10 +1333,11 @@ function CreateImageWindow(imageInfos) {
     originalCanvas.style.position = "absolute";
     originalCanvas.style.width = originalCanvas.width * imageScaleFactor;
 
-    if (imageInfos.AspectX && imageInfos.AspectY)
+    if (imageInfos.AspectX && imageInfos.AspectY) {
         originalCanvas.style.height = Math.floor(originalCanvas.height * imageScaleFactor * imageInfos.AspectY / imageInfos.AspectX);
-    else
+    } else {
         originalCanvas.style.height = originalCanvas.height * imageScaleFactor;
+    }
 
     originalCanvas.getContext("2d").drawImage(imageInfos.Image, 0, 0, imageInfos.Image.width, imageInfos.Image.height);
 
@@ -1751,11 +1382,13 @@ function CreateImageWindow(imageInfos) {
     windowDiv.style.height = parseInt(originalCanvas.style.height, 10) + LINE_HEIGHT + LINE_HEIGHT + LINE_HEIGHT;
     windowDiv.style.zIndex = GlobalWindowZIndexCounter++;
 
-    windowDiv.addEventListener("dragstart", function (Event) {
-        Event.dataTransfer.setData("Text", Event.screenX + "," + Event.screenY + "," + this.id);
+    windowDiv.addEventListener("dragstart", function (e) {
+        //noinspection JSUnresolvedVariable
+        e.dataTransfer.setData("Text", e.screenX + "," + e.screenY + "," + this.id);
     }, false);
 
-    windowDiv.addEventListener("click", function (Event) {
+    //noinspection JSUnusedLocalSymbols
+    windowDiv.addEventListener("click", function (e) {
         this.style.zIndex = GlobalWindowZIndexCounter++;
     }, false);
 
@@ -1771,7 +1404,7 @@ function CreateImageWindow(imageInfos) {
     titleTextSpan.style.height = "100%";
     titleTextSpan.style.userSelect = "none";
     titleTextSpan.style.backgroundColor = WINDOW_COLOR;
-    titleTextSpan.innerHTML = encodeURIComponent(imageInfos.FileName) + " [" + imageInfos.Image.width + " x " + imageInfos.Image.height + ", " + GetColors(displayCanvas).length + " colours]";
+    titleTextSpan.innerHTML = encodeURIComponent(imageInfos.FileName) + " [" + imageInfos.Image.width + " x " + imageInfos.Image.height + ", " + getColors(displayCanvas).length + " colours]";
 
     titleBarDiv.appendChild(titleTextSpan);
 
@@ -1785,7 +1418,8 @@ function CreateImageWindow(imageInfos) {
     closeLabel.style.backgroundColor = WINDOW_COLOR;
     closeLabel.innerHTML = "X";
 
-    closeLabel.addEventListener("click", function (Event) {
+    //noinspection JSUnusedLocalSymbols
+    closeLabel.addEventListener("click", function (e) {
         this.parentNode.parentNode.parentNode.removeChild(this.parentNode.parentNode);
     }, false);
 
@@ -1797,17 +1431,17 @@ function CreateImageWindow(imageInfos) {
     menuDiv.style.height = LINE_HEIGHT;
     menuDiv.style.overflow = "hidden";
 
-    menuDiv.appendChild(CreateMenuItem(imageInfos.Id,
+    menuDiv.appendChild(createMenuItem(imageInfos.Id,
         {
             Type:   "checkbox",
             Name:   "global_colors",
             Text:   "Global Colours",
             Action: function () {
-                SetGlobalColors(this);
+                setGlobalColors(this);
             }
         }));
 
-    menuDiv.appendChild(CreateMenuItem(imageInfos.Id,
+    menuDiv.appendChild(createMenuItem(imageInfos.Id,
         {
             Type:    "label",
             Name:    "colors",
@@ -1832,11 +1466,11 @@ function CreateImageWindow(imageInfos) {
                 {Name: "global", Text: "Global"}
             ],
             Action:  function () {
-                ProcessMenuAction(this.id.substring(this.id.lastIndexOf("_") + 1));
+                processMenuAction(this.id.substring(this.id.lastIndexOf("_") + 1));
             }
         }));
 
-    menuDiv.appendChild(CreateMenuItem(imageInfos.Id,
+    menuDiv.appendChild(createMenuItem(imageInfos.Id,
         {
             Type:    "label",
             Name:    "palette",
@@ -1849,11 +1483,11 @@ function CreateImageWindow(imageInfos) {
                 {Name: "16777216", Text: "16777216 (AGA)"}
             ],
             Action:  function () {
-                ProcessMenuAction(this.id.substring(this.id.lastIndexOf("_") + 1));
+                processMenuAction(this.id.substring(this.id.lastIndexOf("_") + 1));
             }
         }));
 
-    menuDiv.appendChild(CreateMenuItem(imageInfos.Id,
+    menuDiv.appendChild(createMenuItem(imageInfos.Id,
         {
             Type:    "label",
             Name:    "dither",
@@ -1874,17 +1508,17 @@ function CreateImageWindow(imageInfos) {
                 {Name: "sl", Text: "Sierra Lite"}
             ],
             Action:  function () {
-                ProcessMenuAction(this.id.substring(this.id.lastIndexOf("_") + 1));
+                processMenuAction(this.id.substring(this.id.lastIndexOf("_") + 1));
             }
         }));
 
-    menuDiv.appendChild(CreateMenuItem(imageInfos.Id,
+    menuDiv.appendChild(createMenuItem(imageInfos.Id,
         {
             Type:   "button",
             Name:   "save",
             Text:   "Save",
             Action: function () {
-                SaveImage(this.id.substring(this.id.lastIndexOf("_") + 1));
+                saveImage(this.id.substring(this.id.lastIndexOf("_") + 1));
             }
         }));
 
@@ -1909,8 +1543,9 @@ function CreateImageWindow(imageInfos) {
     return windowDiv;
 }
 
-function CreateMenuItem(id, item) {
-    var menuItemDiv = document.createElement("div");
+function createMenuItem(id, item) {
+    var menuItemDiv = document.createElement("div"),
+        input;
 
     menuItemDiv.id = "menu_" + item.Name + "_div_" + id;
     menuItemDiv.className = "menu_item_class";
@@ -1918,8 +1553,8 @@ function CreateMenuItem(id, item) {
 
     switch (item.Type) {
         case "label":
-            var label = document.createElement("label");
-            var select = document.createElement("select");
+            var label = document.createElement("label"),
+                select = document.createElement("select");
 
             label.id = "menu_" + item.Name + "_label_" + id;
             label.className = "menu_label_class";
@@ -1939,20 +1574,20 @@ function CreateMenuItem(id, item) {
                 option.className = "menu_option_class";
                 option.innerHTML = item.Options[i].Text;
 
-                if (item.Options[i].Disabled)
+                if (item.Options[i].Disabled) {
                     option.disabled = true;
+                }
 
                 if (localStorage) {
                     if (localStorage.getItem("menu_" + item.Name + "_select")) {
-                        if (localStorage.getItem("menu_" + item.Name + "_select") == item.Options[i].Text)
+                        if (localStorage.getItem("menu_" + item.Name + "_select") == item.Options[i].Text) {
                             option.selected = true;
-                    }
-                    else if (item.Options[i].Default) {
+                        }
+                    } else if (item.Options[i].Default) {
                         localStorage.setItem("menu_" + item.Name + "_select", item.Options[i].Text);
                         option.selected = true;
                     }
-                }
-                else if (item.Options[i].Default) {
+                } else if (item.Options[i].Default) {
                     option.selected = true;
                 }
 
@@ -1961,11 +1596,10 @@ function CreateMenuItem(id, item) {
 
             menuItemDiv.appendChild(label);
             menuItemDiv.appendChild(select);
-
             break;
 
         case "button":
-            var input = document.createElement("input");
+            input = document.createElement("input");
 
             input.id = "menu_" + item.Name + "_input_" + id;
             input.className = "menu_input_class";
@@ -1975,11 +1609,10 @@ function CreateMenuItem(id, item) {
             input.addEventListener("click", item.Action, false);
 
             menuItemDiv.appendChild(input);
-
             break;
 
         case "checkbox":
-            var input = document.createElement("input");
+            input = document.createElement("input");
 
             input.id = "menu_" + item.Name + "_input_" + id;
             input.className = "menu_input_class";
@@ -1989,26 +1622,24 @@ function CreateMenuItem(id, item) {
             input.addEventListener("click", item.Action, false);
 
             menuItemDiv.appendChild(input);
-
             break;
     }
 
     return menuItemDiv;
 }
 
-function ProcessMenuAction(id) {
+function processMenuAction(id) {
     document.getElementById("menu_global_colors_input_" + id).checked = false;
 
-    var originalCanvas = document.getElementById("original_canvas_" + id);
-    var displayCanvas = document.getElementById("display_canvas_" + id);
-
-    var imageInfos = document.getElementById("window_div_" + id).ImageInfos;
+    var originalCanvas = document.getElementById("original_canvas_" + id),
+        displayCanvas = document.getElementById("display_canvas_" + id),
+        imageInfos = document.getElementById("window_div_" + id).ImageInfos;
 
     displayCanvas.getContext("2d").drawImage(originalCanvas, 0, 0);
 
-    var colorsSelection = document.getElementById("menu_colors_select_" + id).value;
-    var paletteSelection = document.getElementById("menu_palette_select_" + id).value;
-    var ditherSelection = document.getElementById("menu_dither_select_" + id).value;
+    var colorsSelection = document.getElementById("menu_colors_select_" + id).value,
+        paletteSelection = document.getElementById("menu_palette_select_" + id).value,
+        ditherSelection = document.getElementById("menu_dither_select_" + id).value;
 
     var paletteColors = parseInt(paletteSelection.substr(0, paletteSelection.indexOf(" ")));
 
@@ -2020,7 +1651,7 @@ function ProcessMenuAction(id) {
 
     switch (colorsSelection) {
         case "Original":
-            imageInfos.QuantizedColors = GetColors(displayCanvas);
+            imageInfos.QuantizedColors = getColors(displayCanvas);
 
             break;
 
@@ -2030,91 +1661,133 @@ function ProcessMenuAction(id) {
             switch (ditherSelection) {
                 case "Checks":
                     ditherPattern = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
                     break;
 
                 case "Floyd-Steinberg":
-                    ditherPattern = [0, 0, 0, 7.0 / 16.0, 0, 0, 3.0 / 16.0, 5.0 / 16.0, 1.0 / 16.0, 0, 0, 0, 0, 0, 0];
+                    ditherPattern = [
+                        0, 0, 0, 7.0 / 16.0, 0, 0, 3.0 / 16.0, 5.0 / 16.0,
+                        1.0 / 16.0, 0, 0, 0, 0, 0, 0
+                    ];
 
                     break;
 
                 case "Floyd-Steinberg (85%)":
-                    ditherPattern = [0, 0, 0, 7.0 * 0.85 / 16.0, 0, 0, 3.0 * 0.85 / 16.0, 5.0 * 0.85 / 16.0, 1.0 * 0.85 / 16.0, 0, 0, 0, 0, 0, 0];
+                    //noinspection PointlessArithmeticExpressionJS
+                    ditherPattern = [
+                        0, 0, 0, 7.0 * 0.85 / 16.0, 0, 0, 3.0 * 0.85 / 16.0,
+                        5.0 * 0.85 / 16.0, 1.0 * 0.85 / 16.0, 0, 0, 0, 0, 0, 0
+                    ];
 
                     break;
 
                 case "Floyd-Steinberg (75%)":
-                    ditherPattern = [0, 0, 0, 7.0 * 0.75 / 16.0, 0, 0, 3.0 * 0.75 / 16.0, 5.0 * 0.75 / 16.0, 1.0 * 0.75 / 16.0, 0, 0, 0, 0, 0, 0];
+                    //noinspection PointlessArithmeticExpressionJS
+                    ditherPattern = [
+                        0, 0, 0, 7.0 * 0.75 / 16.0, 0, 0, 3.0 * 0.75 / 16.0,
+                        5.0 * 0.75 / 16.0, 1.0 * 0.75 / 16.0, 0, 0, 0, 0, 0, 0
+                    ];
 
                     break;
 
                 case "False Floyd-Steinberg":
-                    ditherPattern = [0, 0, 0, 3.0 / 8.0, 0, 0, 0, 3.0 / 8.0, 2.0 / 8.0, 0, 0, 0, 0, 0, 0];
+                    ditherPattern = [
+                        0, 0, 0, 3.0 / 8.0, 0, 0, 0, 3.0 / 8.0, 2.0 / 8.0, 0,
+                        0, 0, 0, 0, 0
+                    ];
 
                     break;
 
                 case "Jarvis, Judice, and Ninke":
-                    ditherPattern = [0, 0, 0, 7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 5.0 / 48.0, 7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0, 3.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0];
+                    ditherPattern = [
+                        0, 0, 0, 7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 5.0 / 48.0,
+                        7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0,
+                        3.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0
+                    ];
 
                     break;
 
                 case "Stucki":
-                    ditherPattern = [0, 0, 0, 8.0 / 42.0, 4.0 / 42.0, 2.0 / 42.0, 4.0 / 42.0, 8.0 / 42.0, 4.0 / 42.0, 2.0 / 42.0, 1.0 / 42.0, 2.0 / 42.0, 4.0 / 42.0, 2.0 / 42.0, 1.0 / 42.0];
+                    ditherPattern = [
+                        0, 0, 0, 8.0 / 42.0, 4.0 / 42.0, 2.0 / 42.0, 4.0 / 42.0,
+                        8.0 / 42.0, 4.0 / 42.0, 2.0 / 42.0, 1.0 / 42.0,
+                        2.0 / 42.0, 4.0 / 42.0, 2.0 / 42.0, 1.0 / 42.0
+                    ];
 
                     break;
 
                 case "Atkinson":
-                    ditherPattern = [0, 0, 0, 1.0 / 8.0, 1.0 / 8.0, 0, 1.0 / 8.0, 1.0 / 8.0, 1.0 / 8.0, 0, 0, 0, 1.0 / 8.0, 0, 0];
+                    ditherPattern = [
+                        0, 0, 0, 1.0 / 8.0, 1.0 / 8.0, 0, 1.0 / 8.0, 1.0 / 8.0,
+                        1.0 / 8.0, 0, 0, 0, 1.0 / 8.0, 0, 0
+                    ];
 
                     break;
 
                 case "Burkes":
-                    ditherPattern = [0, 0, 0, 8.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0, 4.0 / 32.0, 8.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0, 0, 0, 0, 0, 0];
+                    ditherPattern = [
+                        0, 0, 0, 8.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0, 4.0 / 32.0,
+                        8.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0, 0, 0, 0, 0, 0
+                    ];
 
                     break;
 
                 case "Sierra":
-                    ditherPattern = [0, 0, 0, 5.0 / 32.0, 3.0 / 32.0, 2.0 / 32.0, 4.0 / 32.0, 5.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0, 0, 2.0 / 32.0, 3.0 / 32.0, 2.0 / 32.0, 0];
+                    ditherPattern = [
+                        0, 0, 0, 5.0 / 32.0, 3.0 / 32.0, 2.0 / 32.0, 4.0 / 32.0,
+                        5.0 / 32.0, 4.0 / 32.0, 2.0 / 32.0, 0, 2.0 / 32.0,
+                        3.0 / 32.0, 2.0 / 32.0, 0
+                    ];
 
                     break;
 
                 case "Two-Row Sierra":
-                    ditherPattern = [0, 0, 0, 4.0 / 16.0, 3.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0, 3.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 0, 0, 0, 0, 0];
+                    ditherPattern = [
+                        0, 0, 0, 4.0 / 16.0, 3.0 / 16.0, 1.0 / 16.0, 2.0 / 16.0,
+                        3.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0, 0, 0, 0, 0, 0
+                    ];
 
                     break;
 
                 case "Sierra Lite":
-                    ditherPattern = [0, 0, 0, 2.0 / 4.0, 0, 0, 1.0 / 4.0, 1.0 / 4.0, 0, 0, 0, 0, 0, 0, 0];
+                    ditherPattern = [
+                        0, 0, 0, 2.0 / 4.0, 0, 0, 1.0 / 4.0, 1.0 / 4.0, 0, 0,
+                        0, 0, 0, 0, 0
+                    ];
 
                     break;
             }
 
             var bitsPerColor = 1;
 
-            if (paletteColors == 256)
+            if (paletteColors == 256) {
                 bitsPerColor = 332;
-            else
-                while (Math.pow(Math.pow(2, bitsPerColor), 3) < paletteColors)
+            } else {
+                while (Math.pow(Math.pow(2, bitsPerColor), 3) < paletteColors) {
                     bitsPerColor++;
+                }
+            }
 
-            ProcessImage(imageInfos, displayCanvas, colorsSelection, bitsPerColor, "RGBL", ditherPattern);
+            processImage(imageInfos, displayCanvas, colorsSelection, bitsPerColor,
+                "RGBL", ditherPattern);
 
             break;
     }
 
-    DisplayColors(imageInfos.QuantizedColors, id);
+    displayColors(imageInfos.QuantizedColors, id);
 }
 
-function ProcessImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappingMethod, ditherPattern) {
-    var ehbMode = false;
-    var colors = [];
+function processImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappingMethod, ditherPattern) {
+    var ehbMode = false,
+        colors = [],
+        i, maxRecursionDepth, colorCube, colorCubeInfo, shadesPerColor,
+        red, green, blue;
 
     if (colorCount == "Global") {
-        for (var i = 0; i < GlobalColors.length; i++)
+        for (i = 0; i < GlobalColors.length; i++)
             colors.push({
                 Red: GlobalColors[i].Red, Green: GlobalColors[i].Green, Blue: GlobalColors[i].Blue
             });
-    }    else if (colorCount == "16 (ZX Spectrum)") {
+    } else if (colorCount == "16 (ZX Spectrum)") {
         colors.push({Red: 0x00, Green: 0x00, Blue: 0x00});
         colors.push({Red: 0x00, Green: 0x00, Blue: 0xcd});
         colors.push({Red: 0xcd, Green: 0x00, Blue: 0x00});
@@ -2132,14 +1805,14 @@ function ProcessImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappi
         colors.push({Red: 0x00, Green: 0xff, Blue: 0xff});
         colors.push({Red: 0xff, Green: 0xff, Blue: 0x00});
         colors.push({Red: 0xff, Green: 0xff, Blue: 0xff});
-    }
-    else if (colorCount == "16 (PCHG)" || colorCount == "32 (PCHG)") {
+    } else if (colorCount == "16 (PCHG)" || colorCount == "32 (PCHG)") {
         colorCount = colorCount.substr(0, colorCount.indexOf(" "));
 
-        var maxRecursionDepth = 1;
+        maxRecursionDepth = 1;
 
-        while (Math.pow(2, maxRecursionDepth) < colorCount)
+        while (Math.pow(2, maxRecursionDepth) < colorCount) {
             maxRecursionDepth++;
+        }
 
         imageInfos.LineColors = [];
 
@@ -2151,22 +1824,23 @@ function ProcessImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappi
 
             lineCanvas.getContext("2d").drawImage(imageCanvas, 0, lineIndex, imageCanvas.width, 1, 0, 0, imageCanvas.width, 1);
 
-            var colorCube = CreateColorCube(lineCanvas);
-            var colorCubeInfo = TrimColorCube(colorCube, {
+            colorCube = createColorCube(lineCanvas);
+
+            colorCubeInfo = trimColorCube(colorCube, {
                 RedMin: 0, RedMax: 255, GreenMin: 0, GreenMax: 255, BlueMin: 0, BlueMax: 255
             });
 
             colors = [];
 
-            QuantizeRecursive(colorCube, colorCubeInfo, colors, 0, maxRecursionDepth);
+            quantizeRecursive(colorCube, colorCubeInfo, colors, 0, maxRecursionDepth);
 
             colors.sort(function (Color1, Color2) {
                 return (Color1.Red * 0.21 + Color1.Green * 0.72 + Color1.Blue * 0.07) - (Color2.Red * 0.21 + Color2.Green * 0.72 + Color2.Blue * 0.07)
             });
 
-            var shadesPerColor = 1 << bitsPerColor;
+            shadesPerColor = 1 << bitsPerColor;
 
-            for (var i = 0; i < colors.length; i++) {
+            for (i = 0; i < colors.length; i++) {
                 colors[i].Red = Math.floor(Math.floor(colors[i].Red * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
                 colors[i].Green = Math.floor(Math.floor(colors[i].Green * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
                 colors[i].Blue = Math.floor(Math.floor(colors[i].Blue * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
@@ -2175,10 +1849,13 @@ function ProcessImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappi
             imageInfos.LineColors.push(colors);
         }
     } else if (colorCount == "256 (8-8-4)") {
-        for (var red = 0; red < 256; red += 255.0 / 7.0)
-            for (var green = 0; green < 256; green += 255.0 / 7.0)
-                for (var blue = 0; blue < 256; blue += 255.0 / 3.0)
+        for (red = 0; red < 256; red += 255.0 / 7.0) {
+            for (green = 0; green < 256; green += 255.0 / 7.0) {
+                for (blue = 0; blue < 256; blue += 255.0 / 3.0) {
                     colors.push({Red: Math.round(red), Green: Math.round(green), Blue: Math.round(blue)});
+                }
+            }
+        }
     } else if (colorCount == "Palette") {
         colors.push({Red: 0, Green: 0, Blue: 0});
         colors.push({Red: 255, Green: 255, Blue: 255});
@@ -2189,45 +1866,47 @@ function ProcessImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappi
         }
 
         if (!imageInfos.Colors || imageInfos.Colors.length > colorCount) {
-            var colorCube = CreateColorCube(imageCanvas);
-            var colorCubeInfo = TrimColorCube(colorCube, {
+            colorCube = createColorCube(imageCanvas);
+
+            colorCubeInfo = trimColorCube(colorCube, {
                 RedMin: 0, RedMax: 255, GreenMin: 0, GreenMax: 255, BlueMin: 0, BlueMax: 255
             });
 
             if (colorCount == 2) {
                 colors.push({Red: 0, Green: 0, Blue: 0});
                 colors.push({Red: 255, Green: 255, Blue: 255});
-            }
-            else {
-                var maxRecursionDepth = 1;
+            } else {
+                maxRecursionDepth = 1;
 
-                while (Math.pow(2, maxRecursionDepth) < colorCount)
+                while (Math.pow(2, maxRecursionDepth) < colorCount) {
                     maxRecursionDepth++;
+                }
 
-                QuantizeRecursive(colorCube, colorCubeInfo, colors, 0, maxRecursionDepth);
+                quantizeRecursive(colorCube, colorCubeInfo, colors, 0, maxRecursionDepth);
 
                 colors.sort(function (Color1, Color2) {
                     return (Color1.Red * 0.21 + Color1.Green * 0.72 + Color1.Blue * 0.07) - (Color2.Red * 0.21 + Color2.Green * 0.72 + Color2.Blue * 0.07)
                 });
 
-                if (colors.length < colorCount)
-                    console.log("Warning: " + colors.length + "/" + colorCount + " colors!");
+                if (colors.length < colorCount) {
+                    console.warn("Warning: " + colors.length + "/" + colorCount + " colors!");
+                }
 
                 if (ehbMode) {
-                    while (colors.length < 64)
+                    while (colors.length < 64) {
                         colors.push({Red: 0, Green: 0, Blue: 0});
+                    }
 
-                    for (var i = 0; i < 32; i++) {
-                        var red = colors[i].Red;
-                        var green = colors[i].Green;
-                        var blue = colors[i].Blue;
+                    for (i = 0; i < 32; i++) {
+                        red = colors[i].Red;
+                        green = colors[i].Green;
+                        blue = colors[i].Blue;
 
                         if (Math.max(red, green, blue) >= 128) {
                             colors[i + 32].Red = Math.floor(red / 2.0);
                             colors[i + 32].Green = Math.floor(green / 2.0);
                             colors[i + 32].Blue = Math.floor(blue / 2.0);
-                        }
-                        else {
+                        } else {
                             colors[i + 32].Red = red;
                             colors[i + 32].Green = green;
                             colors[i + 32].Blue = blue;
@@ -2239,25 +1918,25 @@ function ProcessImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappi
                     }
                 }
             }
-        }
-        else {
-            for (var i = 0; i < imageInfos.Colors.length; i++)
+        } else {
+            for (i = 0; i < imageInfos.Colors.length; i++) {
                 colors.push({
                     Red:  imageInfos.Colors[i].Red, Green: imageInfos.Colors[i].Green,
                     Blue: imageInfos.Colors[i].Blue
                 });
+            }
         }
 
         if (bitsPerColor == "332") {
-            for (var i = 0; i < colors.length; i++) {
+            for (i = 0; i < colors.length; i++) {
                 colors[i].Red = Math.floor(Math.floor(colors[i].Red * 8.0 / 256.0) * (255.0 / (8.0 - 1.0)));
                 colors[i].Green = Math.floor(Math.floor(colors[i].Green * 8.0 / 256.0) * (255.0 / (8.0 - 1.0)));
                 colors[i].Blue = Math.floor(Math.floor(colors[i].Blue * 4.0 / 256.0) * (255.0 / (4.0 - 1.0)));
             }
         } else {
-            var shadesPerColor = 1 << bitsPerColor;
+            shadesPerColor = 1 << bitsPerColor;
 
-            for (var i = 0; i < colors.length; i++) {
+            for (i = 0; i < colors.length; i++) {
                 colors[i].Red = Math.floor(Math.floor(colors[i].Red * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
                 colors[i].Green = Math.floor(Math.floor(colors[i].Green * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
                 colors[i].Blue = Math.floor(Math.floor(colors[i].Blue * shadesPerColor / 256.0) * (255.0 / (shadesPerColor - 1.0)));
@@ -2265,26 +1944,25 @@ function ProcessImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappi
         }
     }
 
-    // Remap image.
-
+    // Remap image
     if (colorCount == "16 (ZX Spectrum)") {
-        RemapZxSpectrumImageLuminance1(imageCanvas, colors, ditherPattern);
+        remapZxSpectrumImageLuminance1(imageCanvas, colors, ditherPattern);
     }
     else if (imageInfos.LineColors) {
-        RemapLineColorsImageLuminance(imageCanvas, imageInfos.LineColors, ditherPattern);
+        remapLineColorsImageLuminance(imageCanvas, imageInfos.LineColors, ditherPattern);
     }
     else if (colorCount == "Palette") {
-        RemapFullPaletteImageLuminance(imageCanvas, bitsPerColor, ditherPattern);
+        remapFullPaletteImageLuminance(imageCanvas, bitsPerColor, ditherPattern);
     }
     else {
         switch (remappingMethod) {
             case "RGB":
-                RemapImage(imageCanvas, colors, ditherPattern);
+                remapImage(imageCanvas, colors, ditherPattern);
 
                 break;
 
             case "RGBL":
-                RemapImageLuminance(imageCanvas, colors, ditherPattern);
+                remapImageLuminance(imageCanvas, colors, ditherPattern);
 
                 break;
         }
@@ -2293,10 +1971,10 @@ function ProcessImage(imageInfos, imageCanvas, colorCount, bitsPerColor, remappi
     imageInfos.QuantizedColors = colors;
 }
 
-function DisplayColors(colors, id) {
-    var colorsCanvas = document.getElementById("colors_canvas_" + id);
-    var colorsContext = colorsCanvas.getContext("2d");
-    var colorsData = colorsContext.getImageData(0, 0, colorsCanvas.width, colorsCanvas.height);
+function displayColors(colors, id) {
+    var colorsCanvas = document.getElementById("colors_canvas_" + id),
+        colorsContext = colorsCanvas.getContext("2d"),
+        colorsData = colorsContext.getImageData(0, 0, colorsCanvas.width, colorsCanvas.height);
 
     for (var x = 0; x < colorsCanvas.width; x++) {
         var colorsIndex = Math.floor(x * colors.length / colorsCanvas.width);
@@ -2314,63 +1992,69 @@ function DisplayColors(colors, id) {
     colorsContext.putImageData(colorsData, 0, 0);
 }
 
-function SaveImage(id) {
-    var imageInfos = document.getElementById("window_div_" + id).ImageInfos;
-    var formatSelection = "IFF";
-    var canvas = document.getElementById("display_canvas_" + id);
-    var colors;
+function saveImage(id) {
+    var imageInfos = document.getElementById("window_div_" + id).ImageInfos,
+        formatSelection = "IFF",
+        canvas = document.getElementById("display_canvas_" + id),
+        colors;
 
-    if (imageInfos.Colors)
+    if (imageInfos.Colors) {
         colors = imageInfos.Colors;
-    else
-        colors = GetColors(canvas);
+    } else {
+        colors = getColors(canvas);
+    }
 
     switch (formatSelection) {
         case "IFF":
-            SaveIff(canvas, colors);
-
+            saveIff(canvas, colors);
             break;
     }
 }
 
-function WriteIffChunkHeader(Data, DataIndex, Id, Size) {
-    for (var i = 0; i < Id.length; i++)
-        Data[DataIndex++] = Id.charCodeAt(i);
+function writeIffChunkHeader(data, dataIndex, id, size) {
+    for (var i = 0; i < id.length; i++) {
+        data[dataIndex++] = id.charCodeAt(i);
+    }
 
-    Data[DataIndex++] = (Size >> 24) & 0xff;
-    Data[DataIndex++] = (Size >> 16) & 0xff;
-    Data[DataIndex++] = (Size >> 8) & 0xff;
-    Data[DataIndex++] = Size & 0xff;
+    data[dataIndex++] = (size >> 24) & 0xff;
+    data[dataIndex++] = (size >> 16) & 0xff;
+    data[dataIndex++] = (size >> 8) & 0xff;
+    data[dataIndex++] = size & 0xff;
 
-    return DataIndex;
+    return dataIndex;
 }
 
-function SaveIff(canvas, colors) {
-    var numberOfBitplanes = 1;
+function saveIff(canvas, colors) {
+    var numberOfBitPlanes = 1;
 
-    while ((1 << numberOfBitplanes) < colors.length)
-        numberOfBitplanes++;
+    while ((1 << numberOfBitPlanes) < colors.length) {
+        numberOfBitPlanes++;
+    }
 
-    var dataIndex = 0;
-    var adjustedImageWidth = Math.ceil(canvas.width / 16) * 16;
-    var bytesPerLine = adjustedImageWidth / 8;
-    var dataSize = 4 + 4 + 4 + 4 + 4 + 20 + 4 + 4 + 4 + 4 + 22 + 4 + 4; // "FORM" + size + "ILBM" + "BMHD" + size + 20
-                                                                        // + "CMAP" + size + "ANNO" + size +
-                                                                        // "http://tool.anides.de\0" + "BODY" + size.
-                                                                        //
+    var dataIndex = 0,
+        adjustedImageWidth = Math.ceil(canvas.width / 16) * 16,
+        bytesPerLine = adjustedImageWidth / 8,
+        copyright = "http://pointofpresence.ru",
+        i;
 
-    dataSize += colors.length * 3 + bytesPerLine * numberOfBitplanes * canvas.height + (((colors.length * 3) & 1) ? 1 : 0);
+    // "FORM" + size + "ILBM" + "BMHD" + size + 20
+    // + "CMAP" + size + "ANNO" + size
+    // + copyright + "BODY" + size.
+    var dataSize = 4 + 4 + 4 + 4 + 4 + 20 + 4 + 4 + 4 + 4 + (copyright.length + 1) + 4 + 4;
+
+    dataSize += colors.length * 3 + bytesPerLine * numberOfBitPlanes * canvas.height + (((colors.length * 3) & 1) ? 1 : 0);
 
     var data = new Uint8Array(dataSize);
 
     // "FORM"
-    dataIndex = WriteIffChunkHeader(data, dataIndex, "FORM", dataSize - 8);
+    dataIndex = writeIffChunkHeader(data, dataIndex, "FORM", dataSize - 8);
 
-    for (var i = 0; i < 4; i++)
+    for (i = 0; i < 4; i++) {
         data[dataIndex++] = "ILBM".charCodeAt(i);
+    }
 
     // "BMHD"
-    dataIndex = WriteIffChunkHeader(data, dataIndex, "BMHD", 20);
+    dataIndex = writeIffChunkHeader(data, dataIndex, "BMHD", 20);
 
     data[dataIndex++] = (adjustedImageWidth >> 8) & 0xff;
     data[dataIndex++] = adjustedImageWidth & 0xff;
@@ -2383,7 +2067,7 @@ function SaveIff(canvas, colors) {
     data[dataIndex++] = 0;
     data[dataIndex++] = 0;
 
-    data[dataIndex++] = numberOfBitplanes;
+    data[dataIndex++] = numberOfBitPlanes;
 
     data[dataIndex++] = 0;
     data[dataIndex++] = 0;
@@ -2400,35 +2084,38 @@ function SaveIff(canvas, colors) {
     data[dataIndex++] = canvas.height & 0xff;
 
     // "CMAP"
-    dataIndex = WriteIffChunkHeader(data, dataIndex, "CMAP", colors.length * 3);
+    dataIndex = writeIffChunkHeader(data, dataIndex, "CMAP", colors.length * 3);
 
-    for (var i = 0; i < colors.length; i++) {
+    for (i = 0; i < colors.length; i++) {
         data[dataIndex++] = colors[i].Red;
         data[dataIndex++] = colors[i].Green;
         data[dataIndex++] = colors[i].Blue;
     }
 
-    if ((colors.length * 3) & 1)
+    //noinspection JSBitwiseOperatorUsage
+    if ((colors.length * 3) & 1) {
         data[dataIndex++] = 0;
+    }
 
     // "ANNO"
-    dataIndex = WriteIffChunkHeader(data, dataIndex, "ANNO", 22);
+    dataIndex = writeIffChunkHeader(data, dataIndex, "ANNO", 22);
 
-    var annotationText = "http://tool.anides.de/"; // Fixed length!
-
-    for (var i = 0; i < annotationText.length; i++)
-        data[dataIndex++] = annotationText.charCodeAt(i);
+    for (i = 0; i < copyright.length; i++) {
+        data[dataIndex++] = copyright.charCodeAt(i);
+    }
 
     // "BODY"
-    dataIndex = WriteIffChunkHeader(data, dataIndex, "BODY", bytesPerLine * numberOfBitplanes * canvas.height);
+    dataIndex = writeIffChunkHeader(data, dataIndex, "BODY", bytesPerLine * numberOfBitPlanes * canvas.height);
 
-    var bitPlaneLines = new Array(numberOfBitplanes);
-    var context = canvas.getContext("2d");
-    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    var bitPlaneLines = new Array(numberOfBitPlanes),
+        context = canvas.getContext("2d"),
+        imageData = context.getImageData(0, 0, canvas.width, canvas.height),
+        bitPlaneIndex;
 
     for (var y = 0; y < canvas.height; y++) {
-        for (var i = 0; i < numberOfBitplanes; i++)
+        for (i = 0; i < numberOfBitPlanes; i++) {
             bitPlaneLines[i] = new Uint8Array(bytesPerLine);
+        }
 
         for (var x = 0; x < canvas.width; x++) {
             var pixelIndex = (x + y * canvas.width) * 4;
@@ -2445,12 +2132,15 @@ function SaveIff(canvas, colors) {
                     if (red == colors[colorIndex].Red && green == colors[colorIndex].Green && blue == colors[colorIndex].Blue)
                         break;
 
-            for (var bitPlaneIndex = 0; bitPlaneIndex < numberOfBitplanes; bitPlaneIndex++)
-                if (colorIndex & (1 << bitPlaneIndex))
+            for (bitPlaneIndex = 0; bitPlaneIndex < numberOfBitPlanes; bitPlaneIndex++) {
+                //noinspection JSBitwiseOperatorUsage
+                if (colorIndex & (1 << bitPlaneIndex)) {
                     bitPlaneLines[bitPlaneIndex][x >> 3] |= 0x80 >> (x & 7);
+                }
+            }
         }
 
-        for (var bitPlaneIndex = 0; bitPlaneIndex < numberOfBitplanes; bitPlaneIndex++)
+        for (bitPlaneIndex = 0; bitPlaneIndex < numberOfBitPlanes; bitPlaneIndex++)
             for (var byteIndex = 0; byteIndex < bytesPerLine; byteIndex++)
                 data[dataIndex++] = bitPlaneLines[bitPlaneIndex][byteIndex];
     }
@@ -2461,13 +2151,16 @@ function SaveIff(canvas, colors) {
     downloadLink.download = "IMAGE.IFF";
     downloadLink.innerHTML = "Download Image";
 
+    //noinspection JSUnresolvedVariable
     if (window.webkitURL != null) {
+        //noinspection JSUnresolvedVariable,JSUnresolvedFunction
         downloadLink.href = window.webkitURL.createObjectURL(new Blob([data], {type: "application/octet-binary"}));
     } else {
+        //noinspection JSUnresolvedVariable,JSUnresolvedFunction
         downloadLink.href = URL.createObjectURL(new Blob([data], {type: "application/octet-binary"}));
 
-        downloadLink.onclick = function (Event) {
-            document.body.removeChild(Event.target);
+        downloadLink.onclick = function (e) {
+            document.body.removeChild(e.target);
         };
 
         downloadLink.style.display = "none";
@@ -2477,7 +2170,7 @@ function SaveIff(canvas, colors) {
     downloadLink.click();
 }
 
-function SetGlobalColors(element) {
+function setGlobalColors(element) {
     if (element.checked) {
         var id = element.id.substring(element.id.lastIndexOf("_") + 1);
 
@@ -2492,8 +2185,9 @@ function SetGlobalColors(element) {
                 if (id != windowId) {
                     document.getElementById("menu_global_colors_input_" + windowId).checked = false;
 
-                    if (document.getElementById("menu_colors_select_" + windowId).value == "Global")
-                        ProcessMenuAction(windowId);
+                    if (document.getElementById("menu_colors_select_" + windowId).value == "Global") {
+                        processMenuAction(windowId);
+                    }
                 }
             }
         }
@@ -2504,4 +2198,3 @@ function SetGlobalColors(element) {
         GlobalColors.push({Red: 255, Green: 255, Blue: 255});
     }
 }
-
